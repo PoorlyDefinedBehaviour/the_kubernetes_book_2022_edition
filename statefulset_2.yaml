@@ -1,0 +1,70 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: flash
+provisioner: pd.csi.storage.gke.io
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: pd-ssd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dullahan
+  labels:
+    app: web
+spec:
+  ports:
+    - port: 80
+      name: web
+  clusterIP: None # The service doesn't have an ip address.
+  selector:
+    app: web
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tkb-sts
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  serviceName: dullahan
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: ctr-web
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+              name: web
+          volumeMounts:
+            - name: webroot
+              mountPath: /usr/share/nginx/html
+      volumeClaimTemplates:
+        - metadata:
+            name: webroot
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "flash"
+            resources:
+              requests:
+                storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jump-pod
+spec:
+  terminationGracePeriodSeconds: 1
+  containers:
+  - image: nigelpoulton/curl:1.0
+    name: jump-ctr
+    tty: true
+    stdin: true
