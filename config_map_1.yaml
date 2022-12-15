@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multimap
+data:
+  given: Nigel
+  family: Poulton
+  city: Macclessfield
+  country: UK
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cmvol
+spec:
+  volumes:
+    - name: volmap
+      configMap:
+        name: multimap
+  containers:
+    - name: hello-ctr
+      image: nigelpoulton/k8sbook:1.0
+      ports:
+        - containerPort: 8080
+      volumeMounts:
+        - name: volmap
+          mountPath: /etc/name
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-app
+spec:
+  containers:
+    - name: hello-ctr
+      image: nigelpoulton/k8sbook:1.0
+      ports:
+        - containerPort: 8080
+      env:
+        - name: FIRSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: multimap
+              key: given
+        - name: LASTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: multimap
+              key: family
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-app-2
+spec:
+  containers:
+    - name: hello-ctr
+      image: nigelpoulton/k8sbook:1.0
+      command: ["/bin/sh", "-c", "echo First name $(FIRSTNAME) last name $(LASTNAME)"]
+      ports:
+        - containerPort: 8080
+      env:
+        - name: FIRSTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: multimap
+              key: given
+        - name: LASTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: multimap
+              key: family
