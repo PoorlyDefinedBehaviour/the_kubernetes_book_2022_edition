@@ -1,0 +1,9 @@
+apiVersion: policy/v1beta
+kind: PodSecurityPolicy
+metadata:
+  name: tampering-example
+spec:
+  readOnlyRootFilesystem: true
+  allowedHostPaths:
+    - pathPrefix: "/test"
+      readonly: true

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo
+spec:
+  # Applies to all containers
+  securityContext:
+    # Non-root user
+    runAsUser: 1000
+  containers:
+    - name: demo
+      image: example.io/simple:1.0
